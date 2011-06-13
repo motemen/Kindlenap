@@ -6,18 +6,20 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 
 use Class::Load qw(load_class);
-use List::MoreUtils qw(first_value);
+use List::MoreUtils qw(first_value apply);
 
 my $url = shift or die;
 my $local = -e $url;
 
 my $document_class = first_value {
+    $_->config->matching($url);
+} apply {
+    s<^$FindBin::Bin/><>;
     s<^lib/><>;
     s<\.pm$><>;
     s</><::>g;
     load_class $_;
-    $_->config->matching($url);
-} $local ? () : glob 'lib/Kindlenap/Document/*.pm';
+} $local ? () : glob "$FindBin::Bin/lib/Kindlenap/Document/*.pm";
 
 $document_class ||= do { require Kindlenap::Document; 'Kindlenap::Document' };
 
@@ -32,3 +34,5 @@ print $fh $novel->format_as_html;
 close $fh;
 
 system 'kindlegen', $html_file;
+
+print $novel->title . $novel->suffix . '.mobi', "\n";
