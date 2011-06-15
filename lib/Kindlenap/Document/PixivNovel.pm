@@ -1,18 +1,18 @@
 package Kindlenap::Document::PixivNovel;
 use utf8;
 use Mouse;
+use MouseX::Types::URI;
 use HTML::TreeBuilder::XPath;
-use URI;
 use URI::QueryParam;
 use JSON::XS;
-use File::Util qw(escape_filename);
 
 extends 'Kindlenap::Document';
 
 has url => (
     is  => 'rw',
-    isa => 'Str',
+    isa => 'URI',
     required => 1,
+    coerce => 1,
 );
 
 has id => (
@@ -20,7 +20,7 @@ has id => (
     isa => 'Int',
     default => sub {
         my $self = shift;
-        return URI->new($self->url)->query_param('id');
+        return $self->url->query_param('id');
     }
 );
 
@@ -87,14 +87,9 @@ sub rpc_get_illust {
         return '';
     };
     $illust_url = URI->new($illust_url);
+    $illust_url->path_query($illust_url->path);
 
-    my $illust_file = escape_filename($illust_url->host . $illust_url->path);
-    unless (-e $illust_file) {
-        my $res = $self->ua->get($illust_url, Referer => $self->url);
-        open my $fh, '>', $illust_file;
-        print $fh $res->content;
-    }
-
+    my $illust_file = $self->_download($illust_url, Referer => $self->url)->relative($self->outdir);
     return qq(<img src="$illust_file">);
 }
 
