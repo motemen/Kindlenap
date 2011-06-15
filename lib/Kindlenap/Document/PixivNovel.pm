@@ -3,6 +3,7 @@ use utf8;
 use Mouse;
 use MouseX::Types::URI;
 use HTML::TreeBuilder::XPath;
+use URI;
 use URI::QueryParam;
 use JSON::XS;
 
@@ -50,7 +51,7 @@ sub scrape {
     my $content = $content_elem->as_text;
 
     my $title = $tree->findnodes(q#//h1/text()#).q();
-    $title =~ s/^\s*|\s*$//g;
+       $title =~ s/^\s*|\s*$//g;
     my $author = $tree->findnodes(q#//a[starts-with(@href, '/novel/member.php')][not(img)]/text()#).q();
     my $user_id = $tree->findnodes(q#id('rpc_u_id')/text()#).q();
 
@@ -67,12 +68,12 @@ sub rpc_get_illust {
 
     my $res = $self->ua->post(
         'http://www.pixiv.net/novel/rpc_novel_illust.php', [
-            mtime => 'NaN',
+            mtime      => 'NaN',
             illust_ids => $illust_id,
             content_id => $self->id,
-            user_id => $self->user_id,
+            user_id    => $self->user_id,
             x_restrict => 0,
-            restrict => 0,
+            restrict   => 0,
         ],
         Referer => $self->url,
     );

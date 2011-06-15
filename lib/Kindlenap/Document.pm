@@ -113,6 +113,8 @@ sub write {
     my $self = shift;
     my $html_file = $self->html_file;
 
+    $self->outdir->mkpath;
+
     open my $fh, '>:utf8', $html_file;
     print $fh $self->format_as_html;
     close $fh;
