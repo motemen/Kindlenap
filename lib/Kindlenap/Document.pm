@@ -24,13 +24,15 @@ has url => (
 has ua => (
     is  => 'rw',
     isa => 'LWP::UserAgent',
+    lazy    => 1,
     default => sub { LWP::UserAgent->new },
 );
 
 has outdir => (
     is  => 'rw',
     isa => 'Path::Class::Dir',
-    coerce => 1,
+    coerce  => 1,
+    lazy    => 1,
     default => sub {
         require FindBin;
         return  dir($FindBin::Bin)->subdir('out');
