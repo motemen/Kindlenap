@@ -14,7 +14,7 @@ my $url = shift or die;
 
 my $document = -e $url ? Kindlenap::Document->from_local_file($url) : Kindlenap::Document->from_url($url);
 $document->outdir($dir);
-$document->scrape unless $document->content;
+$document->scrape;
 
 my $html_file = $document->write;
 print $html_file, "\n";

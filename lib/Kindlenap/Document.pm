@@ -45,7 +45,6 @@ has content => (
 has html_content => (
     is  => 'rw',
     isa => 'Str',
-    lazy_build => 1,
 );
 
 has title => (
@@ -113,6 +112,9 @@ sub from_local_file {
 
 sub scrape {
     my $self = shift;
+
+    return if $self->html_content || $self->content;
+
     my $res = $self->ua->get($self->url);
     die $res->status_line if $res->is_error;
 
@@ -128,8 +130,9 @@ sub scrape {
     $self->html_content($extractor->as_html);
 }
 
-sub _build_html_content {
+sub content_as_html {
     my $self = shift;
+
     my $content = encode_entities $self->content, q("&<>);
        $content =~ s/\r?\n/<br>\n/g;
     $self->_format_content_as_html(\$content);
@@ -138,12 +141,13 @@ sub _build_html_content {
 
 sub _format_content_as_html {
     my ($self, $content_ref) = @_;
+    # override
 }
 
 sub format_as_html {
     my $self = shift;
 
-    my $content = $self->html_content;
+    my $content = $self->html_content || $self->content_as_html;
     my $title   = encode_entities($self->title,  q("&<>)) || '';
     my $author  = encode_entities($self->author, q("&<>)) || '';
 
