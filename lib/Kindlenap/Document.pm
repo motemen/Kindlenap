@@ -128,7 +128,7 @@ sub scrape {
     my $extractor  = HTML::ExtractContent->new;
     $extractor->extract($res->decoded_content);
 
-    $self->title($parser->header('Title') || $self->url);
+    $self->title($parser->header('Title') || $self->url.q());
     $self->html_content($extractor->as_html);
 }
 
