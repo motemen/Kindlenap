@@ -1,7 +1,6 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
-use autodie;
 use opts;
 use FindBin;
 use lib "$FindBin::Bin/lib";

@@ -10,6 +10,7 @@ requires 'MouseX::Types::URI';
 requires 'MouseX::Types::Path::Class';
 
 requires 'autodie';
+requires 'opts';
 
 requires 'Class::Load';
 requires 'Encode';
