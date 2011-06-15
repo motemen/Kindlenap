@@ -1,20 +1,12 @@
 package Kindlenap::Document::PixivNovel;
 use utf8;
 use Mouse;
-use MouseX::Types::URI;
 use HTML::TreeBuilder::XPath;
 use URI;
 use URI::QueryParam;
 use JSON::XS;
 
 extends 'Kindlenap::Document';
-
-has url => (
-    is  => 'rw',
-    isa => 'URI',
-    required => 1,
-    coerce => 1,
-);
 
 has id => (
     is  => 'rw',

@@ -24,7 +24,8 @@ requires 'HTML::TreeBuilder::XPath';
 requires 'HTTP::Config';
 requires 'JSON::XS';
 requires 'LWP::UserAgent';
-requires 'List::MoreUtils';
+requires 'HTML::HeadParser';
+requires 'HTML::ExtractContent';
 requires 'URI';
 requires 'URI::QueryParam';
 
