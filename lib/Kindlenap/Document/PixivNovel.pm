@@ -42,6 +42,8 @@ sub setup_config {
 sub scrape {
     my $self = shift;
     my $res = $self->ua->get($self->url);
+    die $res->status_line unless $res->is_success;
+
     my $tree = HTML::TreeBuilder::XPath->new_from_content($res->decoded_content);
 
     my ($content_elem) = $tree->findnodes(q#//textarea[@name='novel_text']#);
