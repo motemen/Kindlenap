@@ -128,7 +128,7 @@ sub scrape {
     my $extractor  = HTML::ExtractContent->new;
     $extractor->extract($res->decoded_content);
 
-    $self->title($parser->header('Title'));
+    $self->title($parser->header('Title') || $self->url);
     $self->html_content($extractor->as_html);
 }
 
@@ -167,7 +167,7 @@ __HTML__
 
 sub html_file {
     my $self = shift;
-    $self->outdir->file($self->title . $self->suffix . '.html');
+    $self->outdir->file(escape_filename($self->title . $self->suffix . '.html'));
 }
 
 sub write {
