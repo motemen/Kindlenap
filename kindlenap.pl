@@ -23,7 +23,7 @@ __END__
 
 =head1 NAME
 
-kindlenap.pl - Extract web pages to generate .mobi
+kindlenap.pl - Extract web pages (for kindlenap)
 
 =head1 SYNOPSIS
 

@@ -56,7 +56,7 @@ has title => (
 
 has author => (
     is  => 'rw',
-    isa => 'Str',
+    isa => 'Maybe[Str]',
 );
 
 has suffix => (
@@ -84,7 +84,7 @@ sub setup_config {
 }
 
 sub from_url {
-    my ($class, $url) = @_;
+    my ($class, $url, %args) = @_;
 
     my $libdir = file(__FILE__)->dir->parent;
     foreach ($libdir->subdir('Kindlenap', 'Document')->children) {
@@ -102,7 +102,7 @@ sub from_url {
 }
 
 sub from_local_file {
-    my ($class, $file) = @_;
+    my ($class, $file, %args) = @_;
 
     my ($title) = file($file)->basename =~ /^([^\.]+)/;
     open my $fh, '<', $file;
@@ -129,6 +129,7 @@ sub scrape {
     $extractor->extract($res->decoded_content);
 
     $self->title($parser->header('Title') || $self->url.q());
+    $self->author($parser->header('X-Meta-Parser'));
     $self->html_content($extractor->as_html);
 }
 
