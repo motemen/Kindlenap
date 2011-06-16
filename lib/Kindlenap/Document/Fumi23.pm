@@ -33,7 +33,7 @@ sub scrape {
 
     my $title  = $tree->findvalue('//div[@class="detailpost color2"]/h1/text()').q();
     my $author = $tree->findvalue('//p[@class="avatarid"][1]/*[1]/text()').q();
-       $author =~ s/\x{fffd}//g;
+       $author =~ s/[\x{fffd}\x{00a0}]//g;
 
     my @messages = $tree->findnodes('//div[@class="message"]//p[@class="avatarmes"]');
 
