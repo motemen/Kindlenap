@@ -124,13 +124,17 @@ sub scrape {
     my $parser = HTML::HeadParser->new;
     $parser->parse($res->decoded_content);
 
-    require HTML::ExtractContent;
-    my $extractor  = HTML::ExtractContent->new;
-    $extractor->extract($res->decoded_content);
-
     $self->title($parser->header('Title') || $self->url.q());
     $self->author($parser->header('X-Meta-Parser'));
-    $self->html_content($extractor->as_html);
+
+    if ($res->content_type =~ m(^text/plain\b)) {
+        $self->content($res->decoded_content);
+    } else {
+        require HTML::ExtractContent;
+        my $extractor  = HTML::ExtractContent->new;
+        $extractor->extract($res->decoded_content);
+        $self->html_content($extractor->as_html);
+    }
 }
 
 sub content_as_html {
