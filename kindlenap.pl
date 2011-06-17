@@ -8,12 +8,14 @@ use Kindlenap::Document;
 
 binmode STDOUT, ':utf8';
 
-opts my $dir => { isa => 'Str', default => 'out', comment => 'output directroy' };
+opts my $out_dir => { isa => 'Str', default => 'out', comment => 'output directroy' },
+     my $verbose => { isa => 'Bool', default => 0, comment => 'set verbose' };
 
-my $url = shift or die;
+my $url = shift or die 'url required';
 
 my $document = -e $url ? Kindlenap::Document->from_local_file($url) : Kindlenap::Document->from_url($url);
-$document->outdir($dir);
+$document->out_dir($out_dir);
+$document->verbose($verbose);
 $document->scrape;
 
 my $html_file = $document->write;
