@@ -83,7 +83,6 @@ sub rpc_get_illust {
     $illust_url->path_query($illust_url->path);
 
     my $illust_file = $self->_download($illust_url, Referer => $self->url);
-       $illust_file = $illust_file->relative($self->html_file->dir);
     return qq(<img src="$illust_file">);
 }
 
