@@ -5,20 +5,21 @@ use Mouse;
 use MouseX::Types::URI;
 use MouseX::Types::Path::Class;
 use Class::Load qw(load_class);
+use URI;
 use LWP::UserAgent;
 use HTML::Entities;
 use HTTP::Config;
 use Encode;
 use Encode::Guess qw(euc-jp shiftjis);
 use Encode::Locale;
-use File::Util qw(escape_filename);
 use Path::Class;
+use File::Util qw(escape_filename);
 
 has url => (
     is  => 'rw',
     isa => 'URI',
     required => 1,
-    coerce => 1,
+    coerce   => 1,
 );
 
 has ua => (
@@ -28,7 +29,7 @@ has ua => (
     default => sub { LWP::UserAgent->new },
 );
 
-has outdir => (
+has out_dir => (
     is  => 'rw',
     isa => 'Path::Class::Dir',
     coerce  => 1,
@@ -37,6 +38,18 @@ has outdir => (
         require FindBin;
         return  dir($FindBin::Bin)->subdir('out');
     },
+);
+
+has verbose => (
+    is  => 'rw',
+    isa => 'Bool',
+    default => 0,
+);
+
+has with_media => (
+    is  => 'rw',
+    isa => 'Bool',
+    default => 1,
 );
 
 has content => (
@@ -125,15 +138,29 @@ sub scrape {
     $parser->parse($res->decoded_content);
 
     $self->title($parser->header('Title') || $self->url.q());
-    $self->author($parser->header('X-Meta-Parser'));
+    $self->author($parser->header('X-Meta-Author'));
 
     if ($res->content_type =~ m(^text/plain\b)) {
         $self->content($res->decoded_content);
     } else {
         require HTML::ExtractContent;
+
         my $extractor  = HTML::ExtractContent->new;
         $extractor->extract($res->decoded_content);
         $self->html_content($extractor->as_html);
+
+        if ($self->with_media) {
+            require HTML::TreeBuilder::XPath;
+            my $tree = HTML::TreeBuilder::XPath->new_from_content($self->html_content);
+            foreach ($tree->findnodes('//img[@src]')) {
+                my $href = $_->attr('src');
+                my $url = URI->new_abs($href, $res->base);
+                my $path = $self->_download($url);
+                $_->attr(src => $path);
+            }
+            $self->html_content($tree->as_HTML);
+            $tree->delete;
+        }
     }
 }
 
@@ -170,16 +197,26 @@ sub format_as_html {
 __HTML__
 }
 
+sub basename {
+    my $self = shift;
+    return escape_filename($self->title . $self->suffix);
+}
+
 sub html_file {
     my $self = shift;
-    $self->outdir->file(escape_filename($self->title . $self->suffix . '.html'));
+    return $self->out_dir->file($self->basename . '.html');
+}
+
+sub download_dir {
+    my ($self, %args) = @_;
+    return $self->out_dir->subdir($self->basename . '.files');
 }
 
 sub write {
     my $self = shift;
     my $html_file = $self->html_file;
 
-    $self->outdir->mkpath;
+    $html_file->dir->mkpath;
 
     open my $fh, '>:utf8', $html_file;
     print $fh $self->format_as_html;
@@ -188,21 +225,24 @@ sub write {
     return $html_file;
 }
 
+# returns relative path
 sub _download {
     my ($self, $url, %args) = @_;
 
-    my $file = $self->outdir->file(escape_filename($url->host . $url->path)); # remove query string
+    my $file = $self->download_dir->file(escape_filename($url->host . $url->path)); # remove query string
     unless (-e $file) {
-        $self->outdir->mkpath;
+        $file->dir->mkpath;
 
         my $res = $self->ua->get($url, %args);
         warn "$url " . $res->status_line and return if $res->is_error;
 
         open my $fh, '>', $file;
         print $fh $res->content;
+
+        warn "$url => $file\n" if $self->verbose;
     }
 
-    return $file;
+    return $file->relative($self->out_dir);
 }
 
 1;
