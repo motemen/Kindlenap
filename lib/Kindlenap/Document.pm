@@ -18,7 +18,6 @@ use File::Util qw(escape_filename);
 has url => (
     is  => 'rw',
     isa => 'URI',
-    required => 1,
     coerce   => 1,
 );
 
