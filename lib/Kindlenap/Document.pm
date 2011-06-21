@@ -121,13 +121,23 @@ sub from_local_file {
     return $class->new(
         content => decode(guess => do { local $/; scalar <$fh> }),
         title   => decode(locale => $title),
+        suffix  => 'local',
     );
 }
 
 sub scrape {
     my $self = shift;
 
-    return if $self->html_content || $self->content;
+    return if $self->html_content;
+
+    if ($self->content) {
+        unless ($self->title) {
+            if (my ($title) = $self->content =~ /^(.+)/m) {
+                $self->title($title);
+            }
+        }
+        return;
+    }
 
     my $res = $self->ua->get($self->url);
     die $res->status_line if $res->is_error;
