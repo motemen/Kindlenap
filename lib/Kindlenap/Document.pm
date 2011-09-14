@@ -6,7 +6,7 @@ use MouseX::Types::URI;
 use MouseX::Types::Path::Class;
 use Class::Load qw(load_class);
 use URI;
-use LWP::UserAgent;
+use WWW::Mechanize;
 use HTML::Entities;
 use HTTP::Config;
 use Encode;
@@ -23,9 +23,9 @@ has url => (
 
 has ua => (
     is  => 'rw',
-    isa => 'LWP::UserAgent',
+    isa => 'WWW::Mechanize',
     lazy    => 1,
-    default => sub { LWP::UserAgent->new },
+    default => sub { WWW::Mechanize->new(onerror => undef) },
 );
 
 has out_dir => (
@@ -77,6 +77,11 @@ has suffix => (
     lazy_build => 1,
 );
 
+has xpath => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
 sub _build_suffix { '' }
 
 sub config {
@@ -95,8 +100,8 @@ sub setup_config {
     my ($class, $config) = @_;
 }
 
-sub from_url {
-    my ($class, $url, %args) = @_;
+sub class_from_url {
+    my ($class, $url) = @_;
 
     my $libdir = file(__FILE__)->dir->parent;
     foreach ($libdir->subdir('Kindlenap', 'Document')->children) {
@@ -110,7 +115,19 @@ sub from_url {
         }
     }
 
-    return $class->new(url => $url);
+    return $class;
+}
+
+sub load_document_class {
+    my ($class, $name) = @_;
+    my $document_class = "Kindlenap::Document::$name";
+    load_class $document_class;
+    return $document_class;
+}
+
+sub from_url {
+    my ($class, $url, %args) = @_;
+    return $class->class_from_url($url)->new(url => $url, %args);
 }
 
 sub from_local_file {
@@ -132,6 +149,7 @@ sub scrape {
 
     if ($self->content) {
         unless ($self->title) {
+            # use first line as title
             if (my ($title) = $self->content =~ /^(.+)/m) {
                 $self->title($title);
             }
@@ -140,23 +158,16 @@ sub scrape {
     }
 
     my $res = $self->ua->get($self->url);
-    die $res->status_line if $res->is_error;
+    warn $res->status_line and return if $res->is_error;
 
-    require HTML::HeadParser;
-    my $parser = HTML::HeadParser->new;
-    $parser->parse($res->decoded_content);
-
-    $self->title($parser->header('Title') || $self->url.q());
-    $self->author($parser->header('X-Meta-Author'));
+    if (!$self->title || !$self->author) {
+        $self->extract_meta_from_res($res);
+    }
 
     if ($res->content_type =~ m(^text/plain\b)) {
         $self->content($res->decoded_content);
     } else {
-        require HTML::ExtractContent;
-
-        my $extractor  = HTML::ExtractContent->new;
-        $extractor->extract($res->decoded_content);
-        $self->html_content($extractor->as_html);
+        $self->extract_html_content_from_res($res);
 
         if ($self->with_media) {
             require HTML::TreeBuilder::XPath;
@@ -167,9 +178,35 @@ sub scrape {
                 my $path = $self->_download($url);
                 $_->attr(src => $path);
             }
-            $self->html_content($tree->as_HTML);
+            $self->html_content(join '', map { $_->as_HTML } $tree->findnodes('//body/*'));
             $tree->delete;
         }
+    }
+}
+
+sub extract_meta_from_res {
+    my ($self, $res) = @_;
+
+    require HTML::HeadParser;
+    my $parser = HTML::HeadParser->new;
+    $parser->parse($res->decoded_content);
+
+    $self->title($parser->header('Title') || $self->url.q()) unless $self->title;
+    $self->author($parser->header('X-Meta-Author')) unless $self->author;
+}
+
+sub extract_html_content_from_res {
+    my ($self, $res) = @_;
+
+    if ($self->xpath) {
+        require HTML::TreeBuilder::XPath;
+        my $tree = HTML::TreeBuilder::XPath->new_from_content($res->decoded_content);
+        $self->html_content($tree->findnodes($self->xpath)->[0]->as_HTML);
+    } else {
+        require HTML::ExtractContent;
+        my $extractor = HTML::ExtractContent->new;
+        $extractor->extract($res->decoded_content);
+        $self->html_content($extractor->as_html);
     }
 }
 
@@ -238,11 +275,12 @@ sub write {
 sub _download {
     my ($self, $url, %args) = @_;
 
+    my $ua = $self->ua->clone;
     my $file = $self->download_dir->file(escape_filename($url->host . $url->path)); # remove query string
     unless (-e $file) {
         $file->dir->mkpath;
 
-        my $res = $self->ua->get($url, %args);
+        my $res = $ua->get($url, %args);
         warn "$url " . $res->status_line and return if $res->is_error;
 
         open my $fh, '>', $file;

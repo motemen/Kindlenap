@@ -28,6 +28,8 @@ requires 'HTML::HeadParser';
 requires 'HTML::ExtractContent';
 requires 'URI';
 requires 'URI::QueryParam';
+requires 'WWW::Mechanize';
+requires 'WWW::Mechanize::AutoPager';
 
 auto_include;
 
