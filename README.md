@@ -13,7 +13,7 @@ kindlenap.pl converts URL/file to [kindlegen][kindlegen]-ready HTML file.
 HOW TO USE
 ----------
 
-	kindlenap.pl [--out-dir dir] [--title title] [--author author] [--verbose] url-or-file
+	kindlenap.pl [--out-dir dir] [--title title] [--author author] [--verbose] [--autopagerize] url-or-file
 
 If you omit <var>url-or-file</var>, kindlenap.pl reads content from STDIN.
 

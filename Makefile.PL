@@ -2,7 +2,7 @@ use inc::Module::Install;
 
 name 'Kindlenap';
 
-version '0.01';
+version '0.02';
 license 'perl';
 
 requires 'Mouse';
@@ -28,7 +28,7 @@ requires 'HTML::HeadParser';
 requires 'HTML::ExtractContent';
 requires 'URI';
 requires 'URI::QueryParam';
-requires 'WWW::Mechanize';
+requires 'WWW::Mechanize', '1.50';
 requires 'WWW::Mechanize::AutoPager';
 
 auto_include;

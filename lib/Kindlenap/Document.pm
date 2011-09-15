@@ -6,7 +6,7 @@ use MouseX::Types::URI;
 use MouseX::Types::Path::Class;
 use Class::Load qw(load_class);
 use URI;
-use WWW::Mechanize;
+use WWW::Mechanize 1.50;
 use HTML::Entities;
 use HTTP::Config;
 use Encode;
@@ -25,7 +25,7 @@ has ua => (
     is  => 'rw',
     isa => 'WWW::Mechanize',
     lazy    => 1,
-    default => sub { WWW::Mechanize->new(onerror => undef) },
+    default => sub { WWW::Mechanize->new(show_progress => 1, onerror => undef) },
 );
 
 has out_dir => (
@@ -161,7 +161,7 @@ sub scrape {
     warn $res->status_line and return if $res->is_error;
 
     if (!$self->title || !$self->author) {
-        $self->extract_meta_from_res($res);
+        $self->extract_meta_from_res;
     }
 
     if ($res->content_type =~ m(^text/plain\b)) {
@@ -185,27 +185,27 @@ sub scrape {
 }
 
 sub extract_meta_from_res {
-    my ($self, $res) = @_;
+    my $self = shift;
 
     require HTML::HeadParser;
     my $parser = HTML::HeadParser->new;
-    $parser->parse($res->decoded_content);
+    $parser->parse($self->ua->content);
 
     $self->title($parser->header('Title') || $self->url.q()) unless $self->title;
     $self->author($parser->header('X-Meta-Author')) unless $self->author;
 }
 
 sub extract_html_content_from_res {
-    my ($self, $res) = @_;
+    my $self = shift;
 
     if ($self->xpath) {
         require HTML::TreeBuilder::XPath;
-        my $tree = HTML::TreeBuilder::XPath->new_from_content($res->decoded_content);
+        my $tree = HTML::TreeBuilder::XPath->new_from_content($self->ua->content);
         $self->html_content($tree->findnodes($self->xpath)->[0]->as_HTML);
     } else {
         require HTML::ExtractContent;
         my $extractor = HTML::ExtractContent->new;
-        $extractor->extract($res->decoded_content);
+        $extractor->extract($self->ua->content);
         $self->html_content($extractor->as_html);
     }
 }

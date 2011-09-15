@@ -18,6 +18,7 @@ opts my $out_dir => { isa => 'Str',  comment => 'output directroy [out]', defaul
      my $author  => { isa => 'Str',  comment => 'set author' },
      my $verbose => { isa => 'Bool', comment => 'set verbosity', default => 0 },
      my $xpath   => { isa => 'Str',  comment => 'specify xpath for extract'  },
+     my $autopagerize => { isa => 'Bool', comment => 'enable autopagerize', alias => 'A' },
      my $document_class => { isa => 'Str', comment => 'set document class' };
 
 my $url = shift;
@@ -31,6 +32,8 @@ if (not defined $url) {
 } else {
     if ($document_class) {
         $document_class = Kindlenap::Document->load_document_class($document_class);
+    } elsif ($autopagerize) {
+        $document_class = Kindlenap::Document->load_document_class('AutoPagerized');
     } else {
         $document_class = Kindlenap::Document->class_from_url($url);
     }
