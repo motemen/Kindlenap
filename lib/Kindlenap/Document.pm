@@ -175,7 +175,10 @@ sub scrape {
             foreach ($tree->findnodes('//img[@src]')) {
                 my $href = $_->attr('src');
                 my $url = URI->new_abs($href, $res->base);
-                my $path = $self->_download($url);
+                my $path = eval { $self->_download($url) } or do {
+                    warn sprintf 'download failed: %s base=%s: %s', $href, $res->base, $@;
+                    next;
+                };
                 $_->attr(src => $path);
             }
             $self->html_content(join '', map { $_->as_HTML } $tree->findnodes('//body/*'));
