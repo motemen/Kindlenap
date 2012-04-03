@@ -42,7 +42,7 @@ sub scrape {
     my ($content_elem) = $tree->findnodes(q#//textarea[@name='novel_text']#);
     my $content = $content_elem->as_text;
 
-    my $title = $tree->findnodes(q#//h1/text()#).q();
+    my $title = $tree->findnodes(q#//div[@class='novel-front-mainHeader']//h1/text()#).q();
        $title =~ s/^\s*|\s*$//g;
     my $author = $tree->findnodes(q#//a[starts-with(@href, '/novel/member.php')][not(img)]/text()#).q();
     my $user_id = $tree->findnodes(q#id('rpc_u_id')/text()#).q();
