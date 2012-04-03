@@ -137,8 +137,8 @@ sub from_local_file {
     open my $fh, '<', $file;
     return $class->new(
         content => decode(guess => do { local $/; scalar <$fh> }),
-        title   => decode(locale => $title),
-        suffix  => 'local',
+        title   => $title,
+        suffix  => '.local',
     );
 }
 
