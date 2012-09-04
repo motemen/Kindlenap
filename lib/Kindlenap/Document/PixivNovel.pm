@@ -39,7 +39,7 @@ sub scrape {
 
     my $tree = HTML::TreeBuilder::XPath->new_from_content($res->decoded_content);
 
-    my ($content_elem) = $tree->findnodes(q#//textarea[@name='novel_text']#);
+    my ($content_elem) = $tree->findnodes(q#id('novel_text')#);
     my $content = $content_elem->as_text;
 
     my $title = $tree->findnodes(q#//div[@class='novel-front-mainHeader']//h1/text()#).q();
