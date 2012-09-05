@@ -8,6 +8,7 @@ license 'perl';
 requires 'Mouse';
 requires 'MouseX::Types::URI';
 requires 'MouseX::Types::Path::Class';
+requires 'MouseX::Getopt';
 
 requires 'autodie';
 requires 'opts';
